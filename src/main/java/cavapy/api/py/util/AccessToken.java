@@ -7,8 +7,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class ApiResponse {
+public class AccessToken {
 
-    private String status;
-
+    private String accessToken;
 }

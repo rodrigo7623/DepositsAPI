@@ -1,0 +1,43 @@
+{
+  "properties": [
+    {
+      "name": "sandbox.api.token",
+      "type": "java.lang.String",
+      "description": "Description for sandbox.api.token."
+    },
+    {
+      "name": "sandbox.api.accounts",
+      "type": "java.lang.String",
+      "description": "Description for sandbox.api.accounts."
+    },
+    {
+      "name": "sandbox.api.extracts",
+      "type": "java.lang.String",
+      "description": "Description for sandbox.api.extracts."
+    },
+    {
+      "name": "sandbox.api.detail",
+      "type": "java.lang.String",
+      "description": "Description for sandbox.api.detail."
+    },
+    {
+      "name": "sandbox.api.usuario",
+      "type": "java.lang.String",
+      "description": "Description for sandbox.api.usuario."
+    },
+    {
+      "name": "cavapy.ldap.host",
+      "type": "java.lang.String",
+      "description": "Description for cavapy.ldap.host."
+    },
+    {
+      "name": "cavapy.ldap.port",
+      "type": "java.lang.String",
+      "description": "Description for cavapy.ldap.port."
+    },
+    {
+      "name": "cavapy.ldap.user",
+      "type": "java.lang.String",
+      "description": "Description for cavapy.ldap.user."
+    }
+  ] }

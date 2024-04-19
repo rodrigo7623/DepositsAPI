@@ -7,6 +7,7 @@ import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -56,7 +57,7 @@ public class DepositsApiConfig extends ApiDatasource {
             @Qualifier("dataSource") DataSource dataSource) {
         return builder
                 .dataSource(dataSource)
-                .packages("cavapy.api.py.entity")
+                .packages("cavapy.api.py.entity", "cavapy.api.py.responses")
                 .persistenceUnit("entity")
                 .build();
     }

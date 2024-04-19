@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Consulta</title>
+    <!-- Agregar enlaces a archivos CSS para estilos -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            margin-top: 50px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-group {
+            margin-right: 10px;
+        }
+
+        #tablaResultados {
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #dee2e6;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .no-result {
+            font-style: italic;
+            color: #868e96;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<section class="container">
+    <h1 style="text-align: center">Consulta de Transacciones - Depósito</h1>
+    <form id="mainForm" action="/api/deposits/buscar" th:method="post" th:object="${filtrosDeBusqueda}">
+        <div class="form-row">
+            <div class="col-md-4 form-group">
+                <label for="accounts">Cuentas Bancarias:</label>
+                <select id="accounts" name="accounts" class="form-control" th:field="*{cuentaSeleccionada}">
+                    <option value="">Seleccionar Cuenta</option>
+                    <option th:each="account : ${accounts}" th:value="${account.getHash()}"
+                            th:text="${account.getNumeroCuenta()} + ${account.getMoneda()}"></option>
+                </select>
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="startDate">Fecha de Inicio:</label>
+                <input type="date" id="startDate" name="startDate" class="form-control" th:field="*{fechaInicio}">
+            </div>
+            <div class="col-md-4 form-group">
+                <label for="endDate">Fecha Fin:</label>
+                <input type="date" id="endDate" name="endDate" class="form-control" th:field="*{fechaFin}">
+            </div>
+        </div>
+        <div class="text-center">
+            <button id="buscarBtn" class="btn btn-primary" type="submit">Buscar movimientos</button>
+            <button id="limpiarBtn" class="btn btn-secondary" type="button" th:onclick="resetMainForm()">Limpiar</button>
+            <!--<form th:action="@{/recaudar}" th:method="post" class="d-inline">
+                <button id="recaudarBtn" class="btn btn-danger" type="submit">Depositar en CAVAPY</button>
+            </form>-->
+        </div>
+    </form>
+
+    <div id="tablaResultados" th:if="${buscarResponses == null}">
+        <div th:if="${#lists.isEmpty(buscarResponses)}" class="no-result">
+            <p>No existen resultados.</p>
+        </div>
+        <!--<div th:unless="${#lists.isEmpty(buscarResponses)}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Comprobante</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="buscarResponse : ${buscarResponses}">
+                    <td th:text="${buscarResponse.getComprobante()}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>-->
+    </div>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.getElementById('buscarBtn').addEventListener('click', function() {
+            var startDate = document.getElementById('startDate').value;
+            
+            var selectedAccount = document.getElementById('accounts').value;
+            if (startDate === '' || endDate === '') {
+                alert('Por favor, selecciona las fechas de inicio y fin.');
+                event.preventDefault();
+            } else if (selectedAccount === '') {
+                alert('Por favor, selecciona una cuenta bancaria.');
+                event.preventDefault(); // Cancela el envío del formulario
+            }
+        });
+        /*]]>*/
+    </script>
+
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        function resetMainForm() {
+            // Limpia los campos del formulario
+            document.getElementById('accounts').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+
+            // Oculta la tabla de resultados si está visible
+            var tablaResultados = document.getElementById('tablaResultados');
+            if (tablaResultados.style.display !== 'none') {
+                tablaResultados.style.display = 'none';
+            }
+        }
+        /*]]>*/
+    </script>
+
+
+</section>
+
+</body>
+</html>

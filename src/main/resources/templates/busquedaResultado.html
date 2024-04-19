@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Transacciones</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" integrity="sha384-i6lqk75mhrBD6kzO8e+goUnzGz1bD7MNCQ2wzIvT/HORe/Z3/1c+SGQV2H2tM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha384-bI0pdRU+lylMAfvPC7/0RwFqJW6bFfGCOVZSeWefeqA6CrlxdOrXz4TLhE49RWgC" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        header {
+            background-color: darkslateblue;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+        }
+
+        section {
+            margin: 20px 0;
+        }
+
+        select, input, button {
+            margin-right: 10px;
+        }
+
+        /*        #recaudarBtn {
+                    float: right;
+                }*/
+
+        #tablaResultados {
+            margin-top: 20px;
+        }
+
+        #error-alert {
+            /*position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;*/
+            position: fixed;
+            top: 50%;  /* Ajusta el porcentaje según sea necesario */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; /* Oculto por defecto */
+        }
+    </style>
+</head>
+<body>
+
+<header class="bg-dark text-white">
+    <h1>Consulta de Transacciones</h1>
+</header>
+
+<section class="container">
+    <div class="row">
+        <!-- Lista desplegable de cuentas bancarias -->
+        <div class="col-md-4">
+            <label for="accounts">Cuentas Bancarias:</label>
+            <div class="input-group">
+                <select id="accounts" name="accounts" th:field="*{selectedAccount}">
+                    <option value="">Seleccionar Cuenta</option>
+                    <option th:each="account : ${accounts}" th:value="${account.getHash()}" th:text="${account.getNumeroCuenta()} + ${account.getMoneda()}"></option>
+                </select>
+                <!--                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                                </div>-->
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Filtros de fecha -->
+            <label for="startDate">Fecha de Inicio:</label>
+            <input type="date" id="startDate" name="startDate" class="form-control" th:field="*{startDate}">
+        </div>
+
+        <div class="col-md-4">
+            <label for="endDate">Fecha Fin:</label>
+            <input type="date" id="endDate" name="endDate" class="form-control" th:field="*{endDate}">
+        </div>
+
+        <div class="col-md-12 mt-3 text-center">
+
+            <div class="btn-group">
+                <form th:action="@{/buscar}" th:method="post">
+                    <button  id="buscarBtn" class="btn btn-primary ms-auto" >Buscar</button>
+                </form>
+
+            </div>
+            <div class="btn-group">
+                <form th:action="@{/recaudar}" th:method="post">
+                    <button id="recaudarBtn" class="btn btn-danger ms-auto">Recaudar</button>
+                </form>
+            </div>
+            <div class="btn-group">
+                <button  id="limpiarBtn" class="btn btn-secondary ms-auto">Limpiar</button>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<div th:if="${mensajeError}" id="error-alert" class="alert alert-danger alert-dismissible fade show p-5 mb-lg-1" role="alert">
+    <strong>Error:</strong> <span th:text="${mensajeError}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<!-- Contenedor de la tabla de resultados -->
+<div id="tablaResultados"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-i6lqk75mhrBD6kzO8e+goUnzGz1bD7MNCQ2wzIvT/HORe/Z3/1c+SGQV2H2tM" crossorigin="anonymous"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        mostrarErrorAlert();
+
+        setTimeout(function () {
+            cerrarErrorAlert();
+        }, 5000);
+    })
+
+    function mostrarErrorAlert() {
+        const errorAlert = document.getElementById("error-alert");
+        if (errorAlert) {
+            errorAlert.style.display = "block";
+        }
+    }
+
+    function cerrarErrorAlert() {
+        const errorAlert = document.getElementById("error-alert");
+        if (errorAlert) {
+            errorAlert.style.display = "none";
+        }
+    }
+    function mostrarTabla(data) {
+        // Obtener el contenedor donde se agregará la tabla
+        var container = document.getElementById("tablaResultados");
+
+        // Crear la tabla
+        var table = document.createElement("table");
+        table.classList.add("table");
+
+        // Crear el encabezado de la tabla
+        var headerRow = table.createTHead().insertRow(0);
+        var headers = ["idTrama", "comprobante", "fecha"]; // Ejemplo de encabezados de columna
+
+        // Agregar los encabezados a la fila de encabezados
+        headers.forEach(function(headerText) {
+            var headerCell = document.createElement("th");
+            headerCell.textContent = headerText;
+            headerRow.appendChild(headerCell);
+        });
+
+        // Crear el cuerpo de la tabla
+        var tbody = table.createTBody();
+
+        // Iterar sobre los datos recibidos y agregar filas a la tabla
+        data.forEach(function(item) {
+            var row = tbody.insertRow();
+
+            // Agregar celdas con los datos de cada objeto
+            var cell1 = row.insertCell();
+            cell1.textContent = item.idTrama;
+
+            var cell2 = row.insertCell();
+            cell2.textContent = item.comprobante;
+
+            var cell3 = row.insertCell();
+            cell3.textContent = item.fecha;
+
+            // Agregar más celdas según la cantidad de columnas en tus datos
+        });
+
+        // Agregar la tabla al contenedor
+        container.innerHTML = ""; // Limpiar el contenedor antes de agregar la tabla
+        container.appendChild(table);
+
+        // Mostrar la tabla estableciendo su estilo a "display: block"
+        container.style.display = "block";
+    }
+
+    function buscar() {
+        // Obtener los valores seleccionados de la lista desplegable y los campos de fecha
+        const selectedAccount = document.getElementById("accounts").value;
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+
+        // Verificar si se ha seleccionado una cuenta
+        if (!selectedAccount) {
+            alert("Por favor, selecciona una cuenta bancaria.");
+            return; // Detener la función si no se ha seleccionado una cuenta
+        }
+
+        // Realizar la solicitud AJAX al backend para consultar en la base de datos
+        $.ajax({
+            url: '/api/deposits/buscar', // La URL del endpoint en el backend para la consulta
+            type: 'POST', // Utilizamos el método POST para enviar los datos
+            data: {
+                selectedAccount: selectedAccount,
+                startDate: startDate,
+                endDate: endDate
+            },
+            error: function(xhr, status, error) {
+                // Manejar cualquier error que ocurra durante la solicitud AJAX
+                console.error("Error en la solicitud AJAX:", error);
+                // Mostrar un mensaje de error al usuario
+                alert("Ocurrió un error al consultar la base de datos.");
+            }
+        });
+    }
+
+</script>
+
+</body>
+</html>
