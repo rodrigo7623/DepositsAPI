@@ -2,10 +2,8 @@ package cavapy.api.py.responses;
 
 import lombok.Data;
 
-import java.sql.Date;
-
 @Data
-public class GetMovementResponse {
+public class MovementRequestResult {
 
     private String cuenta;
 

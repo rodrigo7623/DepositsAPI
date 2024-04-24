@@ -44,7 +44,7 @@ public class RecaudarController {
     @PostMapping("/recaudar")
     public String recaudar(RedirectAttributes redirectAttributes, HttpServletRequest request) {
         List<BuscarResponse> buscarResponseList;
-        ResponseEntity<?> accessTokeResponse = mainController.getAccessToken(request);
+        ResponseEntity<?> accessTokeResponse = mainController.getAccessToken();
         accessTokeResponse = null;
         if (accessTokeResponse == null) {
             redirectAttributes.addFlashAttribute("mensajeError", "Error al generar el token de acceso.");
