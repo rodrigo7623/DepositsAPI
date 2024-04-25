@@ -1,5 +1,6 @@
 package cavapy.api.py.config;
 
+import cavapy.api.py.DepositsApiApplication;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
@@ -24,32 +25,54 @@ public class RestClientConfig {
     @Value("${server.ssl.key-store-password}")
     String trustedStorePassword;
 
-    ClassLoader classLoader = getClass().getClassLoader();
-
     @Bean
     public RestTemplate restTemplate() throws Exception {
 
-        FileInputStream fileInputStream;
-        File keyFile = null;
+        FileInputStream fileInputStream = null;
+        ClientHttpRequestFactory factory = null;
 
-        URL resourceUrl = classLoader.getResource("keystore/keystore.p12");
+        InputStream inputStream = getClass().getResourceAsStream("/keystore/keystore.p12");
 
-        if (resourceUrl != null) {
-            keyFile = new File(resourceUrl.getFile());
+        // Crear un archivo temporal
+        File tempFile = File.createTempFile("tempfile", ".tmp");
+
+        // Escribir el contenido del InputStream en el archivo temporal
+        try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+            // Crear un FileInputStream a partir del archivo temporal
+            fileInputStream = new FileInputStream(tempFile);
+
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(fileInputStream, "password".toCharArray());
+            CloseableHttpClient httpClient = HttpClients.custom()
+                    .setSSLContext(SSLContextBuilder.create().loadKeyMaterial(keyStore, "password".toCharArray())
+                            .build())
+                    .build();
+            factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            // Cerrar los InputStreams
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (fileInputStream != null) {
+                    fileInputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        if (keyFile != null) {
-            fileInputStream = new FileInputStream(keyFile);
-        } else {
-            fileInputStream = new FileInputStream(trustStore.getFile());
-        }
 
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(fileInputStream, "password".toCharArray());
-        CloseableHttpClient httpClient = HttpClients.custom().setSSLContext(SSLContextBuilder.create().loadKeyMaterial(
-                keyStore, "password".toCharArray()).build()).build();
 
-        ClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
         return new RestTemplate(factory);
     }
 }
