@@ -12,7 +12,7 @@ public class LoginController {
     @GetMapping("/login")
     public String login(Model model) {
         model.addAttribute("credentials", new Credentials());
-        return "/login";
+        return "login";
     }
 
     @PostMapping("/login")
