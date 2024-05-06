@@ -69,7 +69,7 @@
                 <label for="accounts">Cuentas Bancarias:</label>
                 <select id="accounts" name="accounts" class="form-control" th:field="*{cuentaSeleccionada}">
                     <option value="">Seleccionar Cuenta</option>
-                    <option th:each="account : ${accounts}" th:value="${account.getHash()}"
+                    <option th:each="account : ${accounts}" th:value="${account.getNumeroCuenta()}"
                             th:text="${account.getNumeroCuenta()} + ${account.getMoneda()}"></option>
                 </select>
             </div>
@@ -91,7 +91,7 @@
         </div>
     </form>
 
-    <div id="tablaResultados" th:if="${buscarResponses == null}">
+    <div id="tablaResultados" th:if="${buscarResponses != null}">
         <div th:if="${#lists.isEmpty(buscarResponses)}" class="no-result">
             <p>No existen resultados.</p>
         </div>
