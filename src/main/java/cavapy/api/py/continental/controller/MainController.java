@@ -211,6 +211,8 @@ public class MainController {
                     logger.severe(e.getMessage());
                     return new ResponseEntity<>(new ErrorResponse(e.getCause().getMessage(), e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+            } else {
+                hash = cuentaBancaria.getHash();
             }
         } else {
             return new ResponseEntity<>("No existe la cuenta bancaria.", HttpStatus.NOT_FOUND);
