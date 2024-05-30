@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Búsqueda</title>
@@ -56,6 +56,18 @@
             text-align: center;
             margin-top: 10px;
         }
+
+        input[type="text"] {
+            width: 100%;
+            border: none;
+            background-color: transparent;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            background-color: #f8f9fa;
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
@@ -76,23 +88,24 @@
             <tr>
                 <th><input type="checkbox" id="seleccionarTodos" class="seleccionarTodosCheck"></th>
                 <th>Banco</th>
+                <th>N° de RUC</th>
                 <th>Cuenta</th>
                 <th>Comprobante</th>
                 <th>Monto</th>
                 <th>Moneda</th>
                 <th>Fecha</th>
                 <th>Estado</th>
-                <th>Descripcion</th>
+                <th>Descripción</th>
                 <!-- Agrega más cabeceras si es necesario -->
             </tr>
             </thead>
             <tbody>
             <!-- Itera sobre los registros y muestra cada uno con sus datos -->
             <tr th:each="registro : ${buscarResponseList}">
-                <td><input type="checkbox" class="registroSeleccionado" name="seleccionados" value="" th:value="${registro.comprobante}"></td>
+                <td><input type="checkbox" class="registroSeleccionado" name="seleccionados" th:value="${registro.comprobante}"></td>
                 <td th:text="${registro.banco}"></td>
-
-                <td th:text="${registro.numeroDeCuenta}"></td>
+                <td><input type="text" class="editable" value="[[${registro.getNumeroDeDocumento()}]]"></td>
+                <td><input type="text" class="editable" value="[[${registro.numeroDeCuenta}]]"></td>
                 <td th:text="${registro.comprobante}"></td>
                 <td th:text="${registro.monto}"></td>
                 <td th:text="${registro.moneda}"></td>
@@ -121,16 +134,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
 
-
-<!--<script>
-    document.getElementById('seleccionarTodos').addEventListener('change', function() {
-        var checkboxes = document.querySelectorAll('.registroSeleccionado');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = document.getElementById('seleccionarTodos').checked;
-        });
-    });
-</script>-->
-
 <script>
     $(document).ready(function() {
 
@@ -138,7 +141,7 @@
         function verificarMigradoSeleccionado() {
             var migradoSeleccionado = false;
             $('.registroSeleccionado:checked').each(function() {
-                var estado = $(this).closest('tr').find('td:eq(7)').text().trim(); // Obtener el texto del campo Estado
+                var estado = $(this).closest('tr').find('td:eq(8)').text().trim(); // Obtener el texto del campo Estado
                 if (estado === 'MIGRADO') {
                     migradoSeleccionado = true;
                     return false; // Salir del bucle si se encuentra un registro migrado
@@ -228,11 +231,7 @@
             XLSX.writeFile(wb, 'tabla_resultados.xlsx');
         });
     });
-
-
-
 </script>
-
 
 </body>
 </html>
