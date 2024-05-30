@@ -339,6 +339,9 @@ public class MainController {
         List<MovimientosDetalle> movimientosDetalleList = new ArrayList<>();
         int position = 1;
         for (Detalle detalle : movimientosResponse.getMovimientos()) {
+            if (detalle.getTipoDeMovimiento() == null || detalle.getTipoDetalle() == null) {
+                continue;
+            }
             if (detalle.getTipoDeMovimiento().equalsIgnoreCase("Ingreso")
                     && detalle.getTipoDetalle().contains("SIPAP")) {
 
