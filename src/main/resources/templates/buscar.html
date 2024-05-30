@@ -57,6 +57,10 @@
             margin-top: 10px;
         }
 
+        .ruc-col, .cuenta-col {
+            width: 200px; /* Ajusta el valor según sea necesario */
+        }
+
         input[type="text"] {
             width: 100%;
             border: none;
@@ -88,8 +92,8 @@
             <tr>
                 <th><input type="checkbox" id="seleccionarTodos" class="seleccionarTodosCheck"></th>
                 <th>Banco</th>
-                <th>N° de RUC</th>
-                <th>Cuenta</th>
+                <th class="ruc-col">N° de RUC</th>
+                <th class="cuenta-col">Cuenta</th>
                 <th>Comprobante</th>
                 <th>Monto</th>
                 <th>Moneda</th>
@@ -104,8 +108,8 @@
             <tr th:each="registro : ${buscarResponseList}">
                 <td><input type="checkbox" class="registroSeleccionado" name="seleccionados" th:value="${registro.comprobante}"></td>
                 <td th:text="${registro.banco}"></td>
-                <td><input type="text" class="editable" value="[[${registro.getNumeroDeDocumento()}]]"></td>
-                <td><input type="text" class="editable" value="[[${registro.numeroDeCuenta}]]"></td>
+                <td class="ruc-col"><input type="text" class="editable" th:value="${registro.numeroDeDocumento}"></td>
+                <td class="cuenta-col"><input type="text" class="editable" th:value="${registro.numeroDeCuenta}"></td>
                 <td th:text="${registro.comprobante}"></td>
                 <td th:text="${registro.monto}"></td>
                 <td th:text="${registro.moneda}"></td>
