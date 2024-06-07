@@ -11,6 +11,8 @@ import cavapy.api.py.continental.repository.MovimientosRepository;
 import cavapy.api.py.continental.repository.ReferenciaDetalleRepository;
 import cavapy.api.py.continental.responses.BuscarResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,6 +28,7 @@ import java.util.Locale;
 import java.util.logging.Logger;
 
 @Controller
+@Configuration
 public class BuscarController {
 
     Logger logger = Logger.getLogger(BuscarResponse.class.getName());
@@ -40,7 +43,8 @@ public class BuscarController {
 
     MainController mainController;
 
-    private final String CORE_URL = "http://localhost:8383/api/core/banks/getAll";
+    @Value("${cavapy.core.url}")
+    private String CORE_URL;
 
     @Autowired
     public BuscarController(CuentaBancariaRepository cuentaBancariaRepository, BuscarResponseRepository buscarResponseRepository, MainController mainController,
