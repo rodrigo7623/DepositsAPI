@@ -22,7 +22,8 @@ public interface BuscarResponseRepository extends CrudRepository<BuscarResponse,
             "rd.banco, " +
             "rd.numero_de_cuenta, " +
             "m.moneda, " +
-            "descripcion " +
+            "descripcion, " +
+            " rd.referencia " +
             "from movimientos m  " +
             "join movimientos_detalle md on m.id_movimientos_pk = md.id_movimientos_fk  " +
             "join referencia_detalle rd on md.id_referencia_detalle = rd.referencia  " +
@@ -46,7 +47,8 @@ public interface BuscarResponseRepository extends CrudRepository<BuscarResponse,
             "rd.banco, " +
             "rd.numero_de_cuenta, " +
             "m.moneda, " +
-            "descripcion " +
+            "descripcion, " +
+            " rd.referencia " +
             "from movimientos m  " +
             "join movimientos_detalle md on m.id_movimientos_pk = md.id_movimientos_fk  " +
             "LEFT join referencia_detalle rd on md.id_referencia_detalle = rd.referencia  " +

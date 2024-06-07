@@ -58,6 +58,9 @@ public class BuscarResponse {
 
     @Column(name = "numero_de_cuenta")
     private String numeroDeCuenta;
+
+    @Column(name = "referencia")
+    private String referencia;
     /*
       <td th:text="${registro.banco}"></td>
                 <td th:text="${registro.numeroDeDocumento}"></td>
