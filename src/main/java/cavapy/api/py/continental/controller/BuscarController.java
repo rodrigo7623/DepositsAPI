@@ -93,7 +93,7 @@ public class BuscarController {
 
                 if (isSubsequence(cadena, bt.getAccountNumber())) {
 
-                    paddedString = String.format("%0" + bt.getAccountNumber().length() + "d", Integer.parseInt(cadena));
+                    paddedString = String.format("%0" + bt.getAccountNumber().length() + "d", cadena);
 
                     br.setNumeroDeDocumento(paddedString);
 
