@@ -84,6 +84,7 @@ public class BuscarController {
         }
         List<BuscarResponse> buscarResponseList = buscarResponseRepository.getAllByFechaInicialAndFechaFin(startDate, endDate, selectedAccount);
         BankType[] response = restTemplate.getForObject(CORE_URL, BankType[].class);
+        String paddedString = null;
         for (BuscarResponse br : buscarResponseList) {
 
             for (BankType bt : response) {
@@ -91,15 +92,20 @@ public class BuscarController {
                 String cadena = removerCeros(br.getNumeroDeCuenta());
 
                 if (isSubsequence(cadena, bt.getAccountNumber())) {
-                    br.setNumeroDeDocumento(bt.getDocumentNumber());
+
+                    paddedString = String.format("%0" + bt.getAccountNumber().length() + "d", Integer.parseInt(cadena));
+
+                    br.setNumeroDeDocumento(paddedString);
 
                     ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
                     if (referenciaDetalle != null) {
                         referenciaDetalle.setNumeroDeCuenta(cadena);
-                        referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
+                        referenciaDetalle.setNumeroDeDocumento(paddedString);
                         referenciaDetalleRepository.save(referenciaDetalle);
                     }
                     break;
+                } else {
+                    paddedString = cadena;
                 }
 
             }
@@ -116,7 +122,7 @@ public class BuscarController {
             String numeroFormateado = formatoDecimal.format(numeroDouble);
             br.setMonto(numeroFormateado);
             br.setMoneda(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD");
-            br.setNumeroDeCuenta(removerCeros(br.getNumeroDeCuenta()));
+            br.setNumeroDeCuenta(paddedString);
         }
         List<CuentaBancaria> bankAccounts = (List<CuentaBancaria>) cuentaBancariaRepository.findByEstado("AC").orElse(null);
         if (buscarResponseList.isEmpty()) {

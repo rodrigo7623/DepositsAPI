@@ -111,7 +111,7 @@ public class DepositarController {
                 && correct.getCurrency().equals(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD")
                 && correct.getOperationAmount().equals(br.getMonto())) {
                     br.setIndMigracion("MIGRADO");
-                    br.setDescripcion("Migracion exitosa");
+                    br.setDescripcion("Migración exitosa");
                     break;
                 }
             }
