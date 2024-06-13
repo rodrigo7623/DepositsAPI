@@ -84,7 +84,7 @@ public class BuscarController {
         }
         List<BuscarResponse> buscarResponseList = buscarResponseRepository.getAllByFechaInicialAndFechaFin(startDate, endDate, selectedAccount);
         BankType[] response = restTemplate.getForObject(CORE_URL, BankType[].class);
-        String paddedString = null;
+        boolean sw = false;
         for (BuscarResponse br : buscarResponseList) {
 
             for (BankType bt : response) {
@@ -93,22 +93,36 @@ public class BuscarController {
 
                 if (isSubsequence(cadena, bt.getAccountNumber())) {
 
-                    paddedString = String.format("%0" + bt.getAccountNumber().length() + "d", cadena);
+                    sw = true;
 
-                    br.setNumeroDeDocumento(paddedString);
+                    br.setNumeroDeDocumento(bt.getDocumentNumber());
+                    br.setNumeroDeCuenta(bt.getAccountNumber());
 
                     ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
                     if (referenciaDetalle != null) {
-                        referenciaDetalle.setNumeroDeCuenta(cadena);
-                        referenciaDetalle.setNumeroDeDocumento(paddedString);
+                        referenciaDetalle.setNumeroDeCuenta(bt.getAccountNumber());
+                        referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
                         referenciaDetalleRepository.save(referenciaDetalle);
                     }
                     break;
-                } else {
-                    paddedString = cadena;
                 }
 
             }
+
+            if (!sw) {
+                String moneda = "";
+                if (br.getMoneda().equalsIgnoreCase("MONEDA NACIONAL")) {
+                    moneda = "PYG";
+                } else moneda = "USD";
+
+                for (BankType bt : response) {
+
+                    if (br.getBanco().equalsIgnoreCase(bt.getDescription()) && (moneda.equalsIgnoreCase(bt.getCurrency()))) {
+                        br.setNumeroDeCuenta(bt.getAccountNumber());
+                        br.setNumeroDeDocumento(bt.getDocumentNumber());
+                    }
+                }
+            } else sw = false;
 
             double numeroDouble = Double.parseDouble(br.getMonto()); // Convertir el String a un número double
 
@@ -122,7 +136,6 @@ public class BuscarController {
             String numeroFormateado = formatoDecimal.format(numeroDouble);
             br.setMonto(numeroFormateado);
             br.setMoneda(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD");
-            br.setNumeroDeCuenta(paddedString);
         }
         List<CuentaBancaria> bankAccounts = (List<CuentaBancaria>) cuentaBancariaRepository.findByEstado("AC").orElse(null);
         if (buscarResponseList.isEmpty()) {
