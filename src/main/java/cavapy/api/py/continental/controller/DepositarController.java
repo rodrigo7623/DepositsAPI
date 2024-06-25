@@ -1,8 +1,11 @@
 package cavapy.api.py.continental.controller;
 
 import cavapy.api.py.continental.entity.MovimientosDetalle;
+import cavapy.api.py.continental.entity.ReferenciaDetalle;
+import cavapy.api.py.continental.model.BankType;
 import cavapy.api.py.continental.repository.BuscarResponseRepository;
 import cavapy.api.py.continental.repository.MovimientosDetalleRepository;
+import cavapy.api.py.continental.repository.ReferenciaDetalleRepository;
 import cavapy.api.py.continental.responses.BuscarResponse;
 import cavapy.api.py.continental.responses.DepositResponse;
 import cavapy.api.py.continental.util.Deposit;
@@ -36,7 +39,10 @@ public class DepositarController {
     @Autowired
     private MovimientosDetalleRepository movimientosDetalleRepository;
 
-    @Value("${pradera.uat.url.deposit}")
+    @Autowired
+    private ReferenciaDetalleRepository referenciaDetalleRepository;
+
+    @Value("${pradera.preprod.url.deposit}")
     private String depositUrl;
 
 
@@ -51,6 +57,8 @@ public class DepositarController {
         this.restTemplate = restTemplate;
     }
 
+    @Value("${cavapy.core.url}")
+    private String CORE_URL;
 
     @PostMapping(value = "/depositar")
     public String depositarSeleccionados(@RequestParam("seleccionados") List<String> seleccionados,
@@ -136,13 +144,13 @@ public class DepositarController {
             }
         }
 
-
+        BankType[] responseCore = restTemplate.getForObject(CORE_URL, BankType[].class);
+        boolean sw = false;
         for (BuscarResponse br: buscarResponseList) {
 
             MovimientosDetalle md = new MovimientosDetalle();
 
             md = movimientosDetalleRepository.findById(br.getComprobante()).get();
-
 
             md.setIndMigracion(br.getIndMigracion());
             md.setDescripcion(br.getDescripcion());
@@ -166,6 +174,37 @@ public class DepositarController {
 
         model.addAttribute("buscarResponseList", buscarResponseList);
         return "buscar";
+    }
+
+
+    private boolean isSubsequence(String A, String B) {
+        int j = 0; // Índice para la cadena A
+
+        for (int i = 0; i < B.length() && j < A.length(); i++) {
+            if (A.charAt(j) == B.charAt(i)) {
+                j++;
+            }
+        }
+
+        return j == A.length();
+    }
+
+    private String removerCeros(String accountNumber) {
+        boolean sw = false;
+        String retorno = "";
+        for (int i = 0; i < accountNumber.length(); i++) {
+            if (accountNumber.charAt(i) != '0') {
+                sw = true;
+            }
+            if (accountNumber.charAt(i) == '-') {
+                sw = false;
+                continue;
+            }
+            if (sw) {
+                retorno += accountNumber.charAt(i);
+            }
+        }
+        return retorno;
     }
 
     @GetMapping(value = "/depositar")

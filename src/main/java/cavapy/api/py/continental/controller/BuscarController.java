@@ -92,10 +92,10 @@ public class BuscarController {
                 String cadena = removerCeros(br.getNumeroDeCuenta());
 
                 if (isSubsequence(cadena, bt.getAccountNumber())) {
+                    br.setNumeroDeDocumento(bt.getDocumentNumber());
 
                     sw = true;
 
-                    br.setNumeroDeDocumento(bt.getDocumentNumber());
                     br.setNumeroDeCuenta(bt.getAccountNumber());
 
                     ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
@@ -103,6 +103,7 @@ public class BuscarController {
                         referenciaDetalle.setNumeroDeCuenta(bt.getAccountNumber());
                         referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
                         referenciaDetalleRepository.save(referenciaDetalle);
+                        referenciaDetalleRepository.flush();
                     }
                     break;
                 }
@@ -120,6 +121,14 @@ public class BuscarController {
                     if (br.getBanco().equalsIgnoreCase(bt.getDescription()) && (moneda.equalsIgnoreCase(bt.getCurrency()))) {
                         br.setNumeroDeCuenta(bt.getAccountNumber());
                         br.setNumeroDeDocumento(bt.getDocumentNumber());
+                        ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
+                        if (referenciaDetalle != null) {
+                            referenciaDetalle.setNumeroDeCuenta(bt.getAccountNumber());
+                            referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
+                            referenciaDetalleRepository.save(referenciaDetalle);
+                            referenciaDetalleRepository.flush();
+                        }
+                        break;
                     }
                 }
             } else sw = false;

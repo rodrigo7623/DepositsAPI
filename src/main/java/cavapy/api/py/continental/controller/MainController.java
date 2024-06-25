@@ -95,7 +95,7 @@ public class MainController {
     private String praderaToken;
 
 
-    @Value("${pradera.uat.url.deposit}")
+    @Value("${pradera.preprod.url.deposit}")
     private String depositUrl;
 
     @RequestMapping(value = "/getAccessToken", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
