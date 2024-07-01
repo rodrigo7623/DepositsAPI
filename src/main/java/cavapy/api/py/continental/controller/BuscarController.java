@@ -65,10 +65,10 @@ public class BuscarController {
         String selectedAccount = filtrosDeBusqueda.getCuentaSeleccionada();
         String startDate = filtrosDeBusqueda.getFechaInicio();
         String endDate = filtrosDeBusqueda.getFechaFin();
-        logger.info("Invocación al método buscar");
+        /*logger.info("Invocación al método buscar");
         logger.info("Cuenta seleccionada: " + selectedAccount);
         logger.info("Fecha de inicio: " + startDate);
-        logger.info("Fecha de fin: " + endDate);
+        logger.info("Fecha de fin: " + endDate);*/
 /*        CuentaBancaria cuentaBancaria = cuentaBancariaRepository.findByNumeroCuenta(selectedAccount).orElse(null);
         if (cuentaBancaria!= null) {
             selectedAccount = cuentaBancaria.getHash();
@@ -83,6 +83,9 @@ public class BuscarController {
             selectedAccount = cuentaBancaria.getHash();
         }
         List<BuscarResponse> buscarResponseList = buscarResponseRepository.getAllByFechaInicialAndFechaFin(startDate, endDate, selectedAccount);
+        System.out.println("start date:" + startDate);
+        System.out.println("end date:" + endDate);
+        System.out.println("account date:" + selectedAccount);
         BankType[] response = restTemplate.getForObject(CORE_URL, BankType[].class);
         boolean sw = false;
         for (BuscarResponse br : buscarResponseList) {
