@@ -72,6 +72,32 @@
             outline: none;
             background-color: #f8f9fa;
         }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group .form-control {
+            border: 1px solid #ced4da; /* Color del borde */
+            border-radius: 0.25rem;
+        }
+
+        .input-group .input-group-text {
+            background-color: #e9ecef; /* Color de fondo de la lupa */
+            border: 1px solid #ced4da; /* Color del borde */
+            border-left: none;
+        }
+
+        .input-group .form-control:focus {
+            border-color: #80bdff; /* Color del borde cuando el input está enfocado */
+            outline: none;
+        }
+
+        #descargarExcelBtn {
+            width: 200px; /* Ajusta este valor según sea necesario */
+            white-space: nowrap; /* Asegura que el texto no se divida en varias líneas */
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
@@ -81,10 +107,27 @@
 <section class="container">
     <h1 style="text-align: center">Resultados de la búsqueda</h1>
 
-    <input type="text" id="filtroComprobante" placeholder="Buscar por coincidencia">
+<!--    <input type="text" id="filtroComprobante" placeholder="Buscar por coincidencia">
     <button id="buscarComprobanteBtn" class="btn btn-primary">Buscar</button>
 
-    <button id="descargarExcelBtn" class="btn btn-success"><i class="fa fa-file-excel"></i> Descargar Excel</button>
+    <button id="descargarExcelBtn" class="btn btn-success"><i class="fa fa-file-excel"></i> Descargar Excel</button>-->
+
+    <div class="form-group row">
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="text" id="filtroComprobante" class="form-control" placeholder="Buscar por coincidencia">
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <button id="buscarComprobanteBtn" class="btn btn-primary">Buscar</button>
+        </div>
+        <div class="col-md-2">
+            <button id="descargarExcelBtn" class="btn btn-success"><i class="fa fa-file-excel"></i> Descargar Excel</button>
+        </div>
+    </div>
 
     <form id="formularioSeleccion" action="/api/deposits/depositar" method="post">
         <table id="tablaResultados">
