@@ -4,13 +4,15 @@ import cavapy.api.py.continental.entity.CuentaBancaria;
 import cavapy.api.py.continental.entity.Movimientos;
 import cavapy.api.py.continental.entity.MovimientosDetalle;
 import cavapy.api.py.continental.entity.ReferenciaDetalle;
+import cavapy.api.py.continental.enums.BanksType;
+import cavapy.api.py.continental.enums.Messages;
+import cavapy.api.py.continental.enums.StateType;
 import cavapy.api.py.continental.repository.CuentaBancariaRepository;
 import cavapy.api.py.continental.repository.MovimientosDetalleRepository;
 import cavapy.api.py.continental.repository.MovimientosRepository;
 import cavapy.api.py.continental.repository.ReferenciaDetalleRepository;
 import cavapy.api.py.continental.responses.*;
-import cavapy.api.py.continental.util.*;
-import cavapy.api.py.continental.responses.*;
+import cavapy.api.py.continental.service.UserProfileService;
 import cavapy.api.py.continental.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,10 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriTemplate;
-
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -149,8 +147,8 @@ public class MainController {
                         cuentaBancaria.setMoneda(ba.getMoneda());
                         cuentaBancaria.setTipo(ba.getTipo());
                         cuentaBancaria.setHash(ba.getHash());
-                        cuentaBancaria.setIdBancoFk(Banks.CONTINENTAL.getIdBank());
-                        cuentaBancaria.setEstado(State.ACTIVO.getValue());
+                        cuentaBancaria.setIdBancoFk(BanksType.CONTINENTAL.getIdBank());
+                        cuentaBancaria.setEstado(StateType.ACTIVO.getValue());
                         cuentaBancaria.setFechaAlta(new Date(System.currentTimeMillis()));
                         cuentaBancaria.setUsu_alta(usuario);
                         cuentaBancaria.setFechaUltmod(new Date(System.currentTimeMillis()));
@@ -226,7 +224,7 @@ public class MainController {
         logger.info("{hash: " + hash + ", fecha de inicio: " + start + ", fecha fin: " + end + "}");
 
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            return badRequestHandler(responseEntity.getStatusCode().getReasonPhrase(), responseEntity.getStatusCode());
+            return badRequestHandler(HttpStatus.BAD_REQUEST.getReasonPhrase(), HttpStatus.BAD_REQUEST);
         }
 
         ResponseEntity<?> responseEntityMovimientos = getMovimientosResponse();
@@ -505,7 +503,7 @@ public class MainController {
 
         // Retrieve the response body and status code
         DepositResponse responseBody = responseEntity.getBody();
-        HttpStatus statusCode = responseEntity.getStatusCode();
+        HttpStatusCode statusCode = responseEntity.getStatusCode();
 
         // Handle the response as needed
         System.out.println("Response Body: " + responseEntity);
@@ -533,6 +531,15 @@ public class MainController {
         headers.add("Subscription-key", subscriptionKey);
         httpEntity = new HttpEntity<>(headers);
         return responseEntity;
+    }
+
+    @Autowired
+    UserProfileService userProfileService;
+
+    @GetMapping(value = "/user/{username}/has/required/profile")
+    public boolean hasRequiredProfile(@PathVariable(name = "username") String username) {
+        System.out.println();
+        return userProfileService.hasRequiredProfile(username);
     }
 
 }

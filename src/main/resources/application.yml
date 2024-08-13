@@ -4,6 +4,6 @@ spring:
       ddl-auto: none
     open-in-view: off
 server:
-  port: 8081
   servlet:
-    context-path: /api/deposits
+    context-path: /api/deposits/v1
+  port: 8081

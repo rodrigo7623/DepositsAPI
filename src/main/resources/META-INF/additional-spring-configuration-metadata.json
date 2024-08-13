@@ -39,5 +39,10 @@
       "name": "cavapy.ldap.user",
       "type": "java.lang.String",
       "description": "Description for cavapy.ldap.user."
+    },
+    {
+      "name": "pradera.uat.url.deposit",
+      "type": "java.lang.String",
+      "description": "Description for pradera.uat.url.deposit."
     }
   ] }

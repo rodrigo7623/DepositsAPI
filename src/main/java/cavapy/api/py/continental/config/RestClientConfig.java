@@ -1,16 +1,19 @@
 package cavapy.api.py.continental.config;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import javax.net.ssl.SSLContext;
 import java.io.*;
 import java.security.KeyStore;
 
@@ -27,7 +30,7 @@ public class RestClientConfig {
     public RestTemplate restTemplate() throws Exception {
 
         FileInputStream fileInputStream = null;
-        ClientHttpRequestFactory factory = null;
+        HttpComponentsClientHttpRequestFactory factory = null;
 
         InputStream inputStream = getClass().getResourceAsStream("/keystore/keystore.p12");
 
@@ -45,11 +48,12 @@ public class RestClientConfig {
             fileInputStream = new FileInputStream(tempFile);
 
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(fileInputStream, "password".toCharArray());
-            CloseableHttpClient httpClient = HttpClients.custom()
-                    .setSSLContext(SSLContextBuilder.create().loadKeyMaterial(keyStore, "password".toCharArray())
-                            .build())
-                    .build();
+            keyStore.load(fileInputStream, trustedStorePassword.toCharArray());
+
+            SSLContext sslContext = new SSLContextBuilder().loadKeyMaterial(keyStore, trustedStorePassword.toCharArray()).build();
+            SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext);
+            HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(socketFactory).build();
+            CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(connectionManager).evictExpiredConnections().build();
             factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
         } catch (IOException e) {
@@ -67,10 +71,6 @@ public class RestClientConfig {
                 e.printStackTrace();
             }
         }
-
-
-
-
         return new RestTemplate(factory);
     }
 }

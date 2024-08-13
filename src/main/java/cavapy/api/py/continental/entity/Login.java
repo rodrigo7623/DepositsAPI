@@ -1,8 +1,7 @@
 package cavapy.api.py.continental.entity;
 
+import jakarta.persistence.*;
 import lombok.*;
-
-import javax.persistence.*;
 
 @AllArgsConstructor
 @NoArgsConstructor

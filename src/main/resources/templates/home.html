@@ -63,7 +63,7 @@
 
 <section class="container">
     <h1 style="text-align: center">Consulta de Transacciones - Depósito</h1>
-    <form id="mainForm" action="/api/deposits/buscar" th:method="post" th:object="${filtrosDeBusqueda}">
+    <form id="mainForm" th:action="@{/buscar}" th:method="post" th:object="${filtrosDeBusqueda}">
         <div class="form-row">
             <div class="col-md-4 form-group">
                 <label for="accounts">Cuentas Bancarias:</label>

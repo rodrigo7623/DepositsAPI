@@ -1,8 +1,8 @@
 package cavapy.api.py.continental.entity;
 
+import jakarta.persistence.Column;
 import lombok.*;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 
 @AllArgsConstructor
