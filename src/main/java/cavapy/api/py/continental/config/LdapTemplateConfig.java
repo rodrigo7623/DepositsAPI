@@ -1,0 +1,16 @@
+package cavapy.api.py.continental.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.ldap.core.LdapTemplate;
+import org.springframework.ldap.core.support.LdapContextSource;
+
+@Configuration
+public class LdapTemplateConfig {
+
+    @Bean
+    public LdapTemplate ldapTemplate(LdapContextSource contextSource) {
+        return new LdapTemplate(contextSource);
+    }
+
+}

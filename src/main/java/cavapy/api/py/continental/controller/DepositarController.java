@@ -42,6 +42,7 @@ public class DepositarController {
     @Autowired
     private ReferenciaDetalleRepository referenciaDetalleRepository;
 
+    //@Value("${pradera.uat.url.deposit}")
     @Value("${pradera.preprod.url.deposit}")
     private String depositUrl;
 
@@ -57,7 +58,7 @@ public class DepositarController {
         this.restTemplate = restTemplate;
     }
 
-    @Value("${cavapy.core.url}")
+    @Value("${cavapy.core.bank.account.url}")
     private String CORE_URL;
 
     @PostMapping(value = "/depositar")
@@ -105,75 +106,108 @@ public class DepositarController {
 
         DepositResponse response = null;
 
+        boolean tipoCambioExist = true;
+
         try {
             response = restTemplate. exchange(depositUrl,
                     HttpMethod.POST, httpEntity, DepositResponse.class).getBody();
         } catch (Exception ex) {
-            logger.info(ex.getMessage());
+            logger.severe(ex.getMessage());
+            tipoCambioExist = false;
         }
 
-        for (Deposit correct : response.getCorrectDeposit()) {
-            for (BuscarResponse br : buscarResponseList) {
-                if (correct.getRuc().equals(br.getNumeroDeDocumento())
-                && correct.getAccountNumber().equals(br.getNumeroDeCuenta())
-                && correct.getCurrency().equals(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD")
-                && correct.getOperationAmount().equals(br.getMonto())) {
-                    br.setIndMigracion("MIGRADO");
-                    br.setDescripcion("Migración exitosa");
-                    break;
+        if (tipoCambioExist) {
+
+            for (Deposit correct : response.getCorrectDeposit()) {
+                for (BuscarResponse br : buscarResponseList) {
+                    if (correct.getRuc().equals(br.getNumeroDeDocumento())
+                            && correct.getAccountNumber().equals(br.getNumeroDeCuenta())
+                            && correct.getCurrency().equals(br.getMoneda().equals("MONEDA NACIONAL") ? "PYG" : "USD")
+                            && correct.getOperationAmount().equals(br.getMonto())) {
+                        br.setIndMigracion("MIGRADO");
+                        br.setDescripcion("Migración exitosa");
+                        break;
+                    }
                 }
             }
-        }
 
-        if (response.getIncorrectDeposit() != null || response.getIncorrectDeposit().length > 0) {
-            for (BuscarResponse br: buscarResponseList) {
-                if (!br.getIndMigracion().equals("MIGRADO")) {
-                    br.setIndMigracion("FALLIDO");
-                    IncorrectDeposit [] incorrectDeposit = response.getIncorrectDeposit();
-                    for (int i = 0; i < incorrectDeposit.length; i++) {
-                        if (incorrectDeposit[i].getRuc().equals(br.getNumeroDeDocumento())
-                                && incorrectDeposit[i].getAccountNumber().equals(br.getNumeroDeCuenta())
-                                && incorrectDeposit[i].getCurrency().equals(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD")
-                                && incorrectDeposit[i].getOperationAmount().equals(br.getMonto())) {
+            if (response.getIncorrectDeposit() != null || response.getIncorrectDeposit().length > 0) {
+                for (BuscarResponse br : buscarResponseList) {
+                    if (!br.getIndMigracion().equals("MIGRADO")) {
+                        br.setIndMigracion("FALLIDO");
+                        IncorrectDeposit[] incorrectDeposit = response.getIncorrectDeposit();
+                        for (int i = 0; i < incorrectDeposit.length; i++) {
+                            if (incorrectDeposit[i].getRuc().equals(br.getNumeroDeDocumento())
+                                    && incorrectDeposit[i].getAccountNumber().equals(br.getNumeroDeCuenta())
+                                    && incorrectDeposit[i].getCurrency().equals(br.getMoneda().equals("MONEDA NACIONAL") ? "PYG" : "USD")
+                                    && incorrectDeposit[i].getOperationAmount().equals(br.getMonto())) {
 
-                            br.setDescripcion(incorrectDeposit[i].getErrorMessage());
-                            break;
+                                br.setDescripcion(incorrectDeposit[i].getErrorMessage());
+                                break;
+                            }
                         }
                     }
                 }
             }
+            BankType[] responseCore = restTemplate.getForObject(CORE_URL, BankType[].class);
+            boolean sw = false;
+            for (BuscarResponse br: buscarResponseList) {
+
+                MovimientosDetalle md = new MovimientosDetalle();
+
+                md = movimientosDetalleRepository.findById(br.getComprobante()).get();
+
+                md.setIndMigracion(br.getIndMigracion());
+                md.setDescripcion(br.getDescripcion());
+
+                movimientosDetalleRepository.save(md);
+
+                double numeroDouble = Double.parseDouble(br.getMonto()); // Convertir el String a un número double
+
+                // Crear un formato con el patrón deseado (en este caso, con punto para los miles y coma para los decimales)
+                DecimalFormatSymbols simbolos = new DecimalFormatSymbols(Locale.getDefault());
+                simbolos.setDecimalSeparator(',');
+                simbolos.setGroupingSeparator('.');
+                DecimalFormat formatoDecimal = new DecimalFormat("#,###.##", simbolos);
+
+                // Aplicar el formato al número double
+                String numeroFormateado = formatoDecimal.format(numeroDouble);
+                br.setMonto(numeroFormateado);
+
+            }
+
+
+            model.addAttribute("buscarResponseList", buscarResponseList);
+            return "buscar";
+        } else {
+            for (BuscarResponse br: buscarResponseList) {
+
+                MovimientosDetalle md = new MovimientosDetalle();
+
+                md = movimientosDetalleRepository.findById(br.getComprobante()).get();
+
+                md.setIndMigracion(br.getIndMigracion());
+                md.setDescripcion(br.getDescripcion());
+
+                movimientosDetalleRepository.save(md);
+
+                double numeroDouble = Double.parseDouble(br.getMonto()); // Convertir el String a un número double
+
+                // Crear un formato con el patrón deseado (en este caso, con punto para los miles y coma para los decimales)
+                DecimalFormatSymbols simbolos = new DecimalFormatSymbols(Locale.getDefault());
+                simbolos.setDecimalSeparator(',');
+                simbolos.setGroupingSeparator('.');
+                DecimalFormat formatoDecimal = new DecimalFormat("#,###.##", simbolos);
+
+                // Aplicar el formato al número double
+                String numeroFormateado = formatoDecimal.format(numeroDouble);
+                br.setMonto(numeroFormateado);
+
+            }
+            model.addAttribute("buscarResponseList", buscarResponseList);
+            model.addAttribute("tipoCambioError", true);
+            return "buscar";
         }
-
-        BankType[] responseCore = restTemplate.getForObject(CORE_URL, BankType[].class);
-        boolean sw = false;
-        for (BuscarResponse br: buscarResponseList) {
-
-            MovimientosDetalle md = new MovimientosDetalle();
-
-            md = movimientosDetalleRepository.findById(br.getComprobante()).get();
-
-            md.setIndMigracion(br.getIndMigracion());
-            md.setDescripcion(br.getDescripcion());
-
-            movimientosDetalleRepository.save(md);
-
-            double numeroDouble = Double.parseDouble(br.getMonto()); // Convertir el String a un número double
-
-            // Crear un formato con el patrón deseado (en este caso, con punto para los miles y coma para los decimales)
-            DecimalFormatSymbols simbolos = new DecimalFormatSymbols(Locale.getDefault());
-            simbolos.setDecimalSeparator(',');
-            simbolos.setGroupingSeparator('.');
-            DecimalFormat formatoDecimal = new DecimalFormat("#,###.##", simbolos);
-
-            // Aplicar el formato al número double
-            String numeroFormateado = formatoDecimal.format(numeroDouble);
-            br.setMonto(numeroFormateado);
-
-        }
-
-
-        model.addAttribute("buscarResponseList", buscarResponseList);
-        return "buscar";
     }
 
 

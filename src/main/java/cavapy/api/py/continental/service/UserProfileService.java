@@ -1,45 +1,63 @@
 package cavapy.api.py.continental.service;
 
-import cavapy.api.py.continental.enums.SystemProfileType;
-import cavapy.api.py.continental.model.ApiResponse;
-import cavapy.api.py.continental.model.BankType;
-import cavapy.api.py.continental.model.SystemProfile;
+import cavapy.api.py.continental.enums.PermittedProfiles;
+import cavapy.api.py.continental.model.UserProfile;
+import cavapy.api.py.continental.util.ApiResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.logging.Logger;
 
 @Service
 public class UserProfileService {
 
+    Logger logger = Logger.getLogger(UserProfileService.class.getName());
+
     @Value("${cavapy.core.user.profile.url}")
-    private String CORE_URL;
+    private String USER_PROFILE_URL;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public boolean hasRequiredProfile(String username) {
-
-        String urlWithParam = CORE_URL.replace("?", username);
-        ApiResponse<SystemProfile> response = restTemplate.getForObject(urlWithParam, ApiResponse.class);
-        if (response.getCode() == HttpStatus.OK.value()) {
-
-            SystemProfile systemProfile = objectMapper.convertValue(response.getData(), SystemProfile.class);
-            if (systemProfile.getIdSystemProfile().equals(SystemProfileType.ADMINISTRACION_Y_FINANZAS_TESORERIA.getCode())
-            && systemProfile.getProfileName().equalsIgnoreCase(SystemProfileType.ADMINISTRACION_Y_FINANZAS_TESORERIA.getValue())) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+    public UserProfileService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
     }
+
+
+    public boolean hasRequiredProfile(String userName) {
+        String urlWithParams = USER_PROFILE_URL.replace("?", userName);
+        ApiResponse<?> response = restTemplate.getForObject(urlWithParams, ApiResponse.class);
+        boolean hasRequiredProfile = false;
+        if (response != null && response.isSuccess()) {
+            UserProfile userProfile = objectMapper.convertValue(response.getData(), UserProfile.class);
+            hasRequiredProfile = verifyProfile(userProfile.getIdSystemProfile(), userProfile.getProfileName(), userProfile.getDescription());
+        } else {
+            logger.info(response.getMessage());
+        }
+        return hasRequiredProfile;
+    }
+
+    private boolean verifyProfile(Integer idSystemProfile, String profileName, String description) {
+        boolean response = false;
+        for (PermittedProfiles pf : PermittedProfiles.values()) {
+            if (isValidPk(pf.getIdSystemProfilePk(), idSystemProfile) && isValidUserName(pf.getDescription(), profileName, description)) {
+                response = true;
+                break;
+            }
+        }
+        return response;
+    }
+
+    private boolean isValidUserName(String profileDescription, String profileName, String description) {
+        return profileDescription.equalsIgnoreCase(profileName) || profileDescription.equalsIgnoreCase(description);
+    }
+
+    private boolean isValidPk(Integer pk, Integer idSystemProfile) {
+        return pk.equals(idSystemProfile);
+    }
+
 }

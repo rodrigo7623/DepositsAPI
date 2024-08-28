@@ -24,12 +24,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +98,7 @@ public class MainController {
     @Value("${pradera.api.authorization}")
     private String praderaToken;
 
-
+    //@Value("${pradera.uat.url.deposit}")
     @Value("${pradera.preprod.url.deposit}")
     private String depositUrl;
 
@@ -107,7 +113,7 @@ public class MainController {
         headers.add("RUC", ruc);
         headers.add("Subscription-key", subscriptionKey);
         HttpEntity<String> httpEntity = new HttpEntity<>(null, headers);
-        ApiResponse apiResponse = new ApiResponse();
+        SimpleApiResponse apiResponse = new SimpleApiResponse();
         try {
             ResponseEntity<String> responseEntity = restTemplate.exchange(accessTokenUrl, HttpMethod.POST, httpEntity, String.class);
             AccessTokenResponse accessTokenResponse = objectMapper.readValue(responseEntity.getBody(), AccessTokenResponse.class);
@@ -168,7 +174,7 @@ public class MainController {
                     }
                     return new ResponseEntity<>(listCuentaBancarias, HttpStatus.OK);
                 } else if (bankAccountsResponse.getStatusCodeValue() == HttpStatus.FORBIDDEN.value()) {
-                    ApiResponse apiResponse = objectMapper.readValue(bankAccountsResponse.getBody(), ApiResponse.class);
+                    SimpleApiResponse apiResponse = objectMapper.readValue(bankAccountsResponse.getBody(), SimpleApiResponse.class);
                     return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
                 }
             } catch (Exception ex) {
@@ -421,7 +427,7 @@ public class MainController {
     }
 
     private ResponseEntity<?> badRequestHandler(String message, HttpStatus httpStatus) {
-        return new ResponseEntity<>(new ApiResponse(httpStatus.value(), message), httpStatus);
+        return new ResponseEntity<>(new SimpleApiResponse(httpStatus.value(), message), httpStatus);
     }
 
     private ResponseEntity<?> getMovimientosResponse() {
@@ -437,7 +443,7 @@ public class MainController {
                 MovimientosResponse movimientosResponse = objectMapper.readValue(responseEntity.getBody(), MovimientosResponse.class);
                 return new ResponseEntity<>(movimientosResponse, HttpStatus.OK);
             } else if (responseEntity.getStatusCodeValue() == HttpStatus.FORBIDDEN.value()) {
-                ApiResponse apiResponse = objectMapper.readValue(responseEntity.getBody(), ApiResponse.class);
+                SimpleApiResponse apiResponse = objectMapper.readValue(responseEntity.getBody(), SimpleApiResponse.class);
                 return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
             } else {
                 ErrorResponse errorResponse = objectMapper.readValue(responseEntity.getBody(), ErrorResponse.class);
@@ -533,13 +539,39 @@ public class MainController {
         return responseEntity;
     }
 
-    @Autowired
-    UserProfileService userProfileService;
+    @GetMapping(value = "/decrypt/{encrypted}")
+    public String decrypt(@PathVariable ("encrypted") String encrypted) throws Exception {
+        String seed = "AESArkinKey";
+        byte[] rawKey = getRawKey(seed.getBytes());
+        byte[] enc = toByte(encrypted);
+        byte[] result = decrypt(rawKey, enc);
+        return new String(result);
+    }
 
-    @GetMapping(value = "/user/{username}/has/required/profile")
-    public boolean hasRequiredProfile(@PathVariable(name = "username") String username) {
-        System.out.println();
-        return userProfileService.hasRequiredProfile(username);
+    private static byte[] getRawKey(byte[] seed) throws Exception {
+        KeyGenerator kgen = KeyGenerator.getInstance("AES");
+        SecureRandom sr = SecureRandom.getInstance("SHA1PRNG");
+        sr.setSeed(seed);
+        kgen.init(128, sr); // 192 and 256 bits may not be available
+        SecretKey skey = kgen.generateKey();
+        byte[] raw = skey.getEncoded();
+        return raw;
+    }
+
+    public static byte[] toByte(String hexString) {
+        int len = hexString.length()/2;
+        byte[] result = new byte[len];
+        for (int i = 0; i < len; i++)
+            result[i] = Integer.valueOf(hexString.substring(2*i, 2*i+2), 16).byteValue();
+        return result;
+    }
+
+    private static byte[] decrypt(byte[] raw, byte[] encrypted) throws Exception {
+        SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
+        Cipher cipher = Cipher.getInstance("AES");
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec);
+        byte[] decrypted = cipher.doFinal(encrypted);
+        return decrypted;
     }
 
 }

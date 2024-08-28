@@ -1,9 +1,0 @@
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: none
-    open-in-view: off
-server:
-  servlet:
-    context-path: /api/deposits/v1
-  port: 8081

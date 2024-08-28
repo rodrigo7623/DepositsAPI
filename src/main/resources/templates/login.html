@@ -45,10 +45,10 @@
                     <h4>CAVAPY</h4>
                 </div>
                 <h2 class="mb-4">Iniciar sesión</h2>
-                <form th:action="@{/perform_login}" method="post">
+                <form th:action="@{/login}" method="post">
                     <div class="form-group">
                         <label for="username">Nombre de usuario:</label>
-                        <input type="text" id="username" name="username" class="form-control" autocomplete="on">
+                        <input type="text" id="username" name="username" class="form-control" autocomplete="on" style="text-transform: uppercase;">
                     </div>
                     <div class="form-group">
                         <label for="password">Contraseña:</label>
@@ -58,6 +58,9 @@
                     <!-- Agregar el div para mostrar el mensaje de error -->
                     <div th:if="${param.error}" class="alert alert-danger mt-3" role="alert">
                         Usuario o contraseña incorrectos.
+                    </div>
+                    <div th:if="${param.profileError}" class="alert alert-danger mt-3" role="alert">
+                        No posee el perfil requerido para el acceso.
                     </div>
                 </form>
             </div>

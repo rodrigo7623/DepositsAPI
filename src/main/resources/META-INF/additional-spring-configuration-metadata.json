@@ -26,7 +26,7 @@
       "description": "Description for sandbox.api.usuario."
     },
     {
-      "name": "cavapy.ldap.host",
+      "name": "cavapy.ldap.url",
       "type": "java.lang.String",
       "description": "Description for cavapy.ldap.host."
     },

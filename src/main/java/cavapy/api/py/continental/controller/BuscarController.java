@@ -1,7 +1,6 @@
 package cavapy.api.py.continental.controller;
 
 import cavapy.api.py.continental.entity.CuentaBancaria;
-import cavapy.api.py.continental.entity.Movimientos;
 import cavapy.api.py.continental.entity.ReferenciaDetalle;
 import cavapy.api.py.continental.model.BankType;
 import cavapy.api.py.continental.model.FiltrosDeBusqueda;
@@ -10,11 +9,13 @@ import cavapy.api.py.continental.repository.CuentaBancariaRepository;
 import cavapy.api.py.continental.repository.MovimientosRepository;
 import cavapy.api.py.continental.repository.ReferenciaDetalleRepository;
 import cavapy.api.py.continental.responses.BuscarResponse;
+import cavapy.api.py.continental.service.BuscarService;
+import cavapy.api.py.continental.service.ValidationService;
+import cavapy.api.py.continental.util.PropertiesConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -33,173 +34,29 @@ public class BuscarController {
 
     Logger logger = Logger.getLogger(BuscarResponse.class.getName());
 
-    private final CuentaBancariaRepository cuentaBancariaRepository;
+    private BuscarService buscarService;
 
-    private final MovimientosRepository movimientosRepository;
-
-    private final ReferenciaDetalleRepository referenciaDetalleRepository;
-
-    private final RestTemplate restTemplate;
-
-    MainController mainController;
-
-    @Value("${cavapy.core.url}")
-    private String CORE_URL;
+    private ValidationService validationService;
 
     @Autowired
-    public BuscarController(CuentaBancariaRepository cuentaBancariaRepository, BuscarResponseRepository buscarResponseRepository, MainController mainController,
-                            RestTemplate restTemplate, MovimientosRepository movimientosRepository, ReferenciaDetalleRepository referenciaDetalleRepository) {
-        this.cuentaBancariaRepository = cuentaBancariaRepository;
-        this.buscarResponseRepository = buscarResponseRepository;
-        this.mainController = mainController;
-        this.restTemplate = restTemplate;
-        this.movimientosRepository = movimientosRepository;
-        this.referenciaDetalleRepository = referenciaDetalleRepository;
+    public BuscarController(BuscarService buscarService, ValidationService validationService) {
+        this.buscarService = buscarService;
+        this.validationService = validationService;
     }
 
-    private final BuscarResponseRepository buscarResponseRepository;
-
-    @RequestMapping(value = "/buscar", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(value = "/buscar")
     public String buscar(@ModelAttribute FiltrosDeBusqueda filtrosDeBusqueda, RedirectAttributes redirectAttributes,
                          Model model) {
-        String selectedAccount = filtrosDeBusqueda.getCuentaSeleccionada();
-        String startDate = filtrosDeBusqueda.getFechaInicio();
-        String endDate = filtrosDeBusqueda.getFechaFin();
-        /*logger.info("Invocación al método buscar");
-        logger.info("Cuenta seleccionada: " + selectedAccount);
-        logger.info("Fecha de inicio: " + startDate);
-        logger.info("Fecha de fin: " + endDate);*/
-/*        CuentaBancaria cuentaBancaria = cuentaBancariaRepository.findByNumeroCuenta(selectedAccount).orElse(null);
-        if (cuentaBancaria!= null) {
-            selectedAccount = cuentaBancaria.getHash();
-        }*/
-
-        String startDateRequest = formatDate(startDate);
-        String endDateRequest = formatDate(endDate);
-
-        mainController.getMovements(selectedAccount, startDateRequest, endDateRequest);
-        CuentaBancaria cuentaBancaria = cuentaBancariaRepository.findByNumeroCuenta(selectedAccount).orElse(null);
-        if (cuentaBancaria!= null) {
-            selectedAccount = cuentaBancaria.getHash();
+        logger.info("Cuenta seleccionada: " + filtrosDeBusqueda.getCuentaSeleccionada() +
+                " Fecha de inicio: " + filtrosDeBusqueda.getFechaInicio() +
+                " Fecha de fin: " + filtrosDeBusqueda.getFechaFin());
+        if (!validationService.isValidDate(filtrosDeBusqueda.getFechaInicio())) {
+            return "redirect:/home?errorStartDate";
         }
-        List<BuscarResponse> buscarResponseList = buscarResponseRepository.getAllByFechaInicialAndFechaFin(startDate, endDate, selectedAccount);
-        System.out.println("start date:" + startDate);
-        System.out.println("end date:" + endDate);
-        System.out.println("account date:" + selectedAccount);
-        BankType[] response = restTemplate.getForObject(CORE_URL, BankType[].class);
-        boolean sw = false;
-        for (BuscarResponse br : buscarResponseList) {
-
-            for (BankType bt : response) {
-
-                String cadena = removerCeros(br.getNumeroDeCuenta());
-
-                if (isSubsequence(cadena, bt.getAccountNumber())) {
-                    br.setNumeroDeDocumento(bt.getDocumentNumber());
-
-                    sw = true;
-
-                    br.setNumeroDeCuenta(bt.getAccountNumber());
-
-                    ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
-                    if (referenciaDetalle != null) {
-                        referenciaDetalle.setNumeroDeCuenta(bt.getAccountNumber());
-                        referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
-                        referenciaDetalleRepository.save(referenciaDetalle);
-                        referenciaDetalleRepository.flush();
-                    }
-                    break;
-                }
-
-            }
-
-            if (!sw) {
-                String moneda = "";
-                if (br.getMoneda().equalsIgnoreCase("MONEDA NACIONAL")) {
-                    moneda = "PYG";
-                } else moneda = "USD";
-
-                for (BankType bt : response) {
-
-                    if (br.getBanco().equalsIgnoreCase(bt.getDescription()) && (moneda.equalsIgnoreCase(bt.getCurrency()))) {
-                        br.setNumeroDeCuenta(bt.getAccountNumber());
-                        br.setNumeroDeDocumento(bt.getDocumentNumber());
-                        ReferenciaDetalle referenciaDetalle = referenciaDetalleRepository.findById(br.getReferencia()).orElse(null);
-                        if (referenciaDetalle != null) {
-                            referenciaDetalle.setNumeroDeCuenta(bt.getAccountNumber());
-                            referenciaDetalle.setNumeroDeDocumento(bt.getDocumentNumber());
-                            referenciaDetalleRepository.save(referenciaDetalle);
-                            referenciaDetalleRepository.flush();
-                        }
-                        break;
-                    }
-                }
-            } else sw = false;
-
-            double numeroDouble = Double.parseDouble(br.getMonto()); // Convertir el String a un número double
-
-            // Crear un formato con el patrón deseado (en este caso, con punto para los miles y coma para los decimales)
-            DecimalFormatSymbols simbolos = new DecimalFormatSymbols(Locale.getDefault());
-            simbolos.setDecimalSeparator(',');
-            simbolos.setGroupingSeparator('.');
-            DecimalFormat formatoDecimal = new DecimalFormat("#,###.##", simbolos);
-
-            // Aplicar el formato al número double
-            String numeroFormateado = formatoDecimal.format(numeroDouble);
-            br.setMonto(numeroFormateado);
-            br.setMoneda(br.getMoneda().equals("MONEDA NACIONAL")?"PYG":"USD");
-        }
-        List<CuentaBancaria> bankAccounts = (List<CuentaBancaria>) cuentaBancariaRepository.findByEstado("AC").orElse(null);
-        if (buscarResponseList.isEmpty()) {
-            redirectAttributes.addFlashAttribute("accounts", bankAccounts);
-            redirectAttributes.addFlashAttribute("filtrosDeBusqueda", filtrosDeBusqueda);
-            redirectAttributes.addFlashAttribute("buscarResponses", buscarResponseList);
-            return "redirect:/home";
-        } else {
-            model.addAttribute("buscarResponseList", buscarResponseList);
+        if (buscarService.existenMovimientos(filtrosDeBusqueda)) {
             return "buscar";
+        } else {
+            return "redirect:/home";
         }
-
-        //model.addAttribute("filtrosDeBusqueda", filtrosDeBusqueda);
-
-
-    }
-
-    private boolean isSubsequence(String A, String B) {
-        int j = 0; // Índice para la cadena A
-
-        for (int i = 0; i < B.length() && j < A.length(); i++) {
-            if (A.charAt(j) == B.charAt(i)) {
-                j++;
-            }
-        }
-
-        return j == A.length();
-    }
-
-    private String removerCeros(String accountNumber) {
-        boolean sw = false;
-        String retorno = "";
-        for (int i = 0; i < accountNumber.length(); i++) {
-            if (accountNumber.charAt(i) != '0') {
-                sw = true;
-            }
-            if (accountNumber.charAt(i) == '-') {
-                sw = false;
-                continue;
-            }
-            if (sw) {
-                retorno += accountNumber.charAt(i);
-            }
-        }
-        return retorno;
-    }
-
-    private String formatDate(String date) {
-        String [] string = date.split("-");
-
-        return  string[2] +
-                "-" + string[1] +
-                "-" + string[0];
     }
 }

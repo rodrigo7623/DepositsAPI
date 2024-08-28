@@ -181,8 +181,13 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.0/xlsx.full.min.js"></script>
 
-<script>
+<script th:inline="javascript">
     $(document).ready(function() {
+
+        var tipoCambioError = [[${tipoCambioError}]];
+        if (tipoCambioError) {
+            alert("No se encontró tipo de cambio para hoy.");
+        }
 
         // Función para verificar si algún registro seleccionado tiene el valor "MIGRADO" en la columna "Estado"
         function verificarMigradoSeleccionado() {

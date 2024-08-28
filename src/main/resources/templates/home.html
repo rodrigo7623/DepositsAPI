@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Agregar enlaces a archivos CSS para estilos -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
@@ -21,10 +23,6 @@
 
         .form-group {
             margin-bottom: 20px;
-        }
-
-        .btn-group {
-            margin-right: 10px;
         }
 
         #tablaResultados {
@@ -89,8 +87,22 @@
                 <button id="recaudarBtn" class="btn btn-danger" type="submit">Depositar en CAVAPY</button>
             </form>-->
         </div>
+
     </form>
 
+    <div class="d-flex justify-content-center">
+        <div th:if="${param.errorStartDate}"
+             class="alert alert-danger alert-dismissible fade show mt-3 text-center py-2 px-3" role="alert"
+             style="display:inline-block; width: 300px; height: 100px; align-content: center">
+            Fecha de inicio no válida.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${param.errorEndDate}"
+             class="alert alert-danger mt-3 text-center py-2 px-3" role="alert"
+             style="display: inline-block;">
+            Fecha fin no válida.
+        </div>
+    </div>
     <div id="tablaResultados" th:if="${buscarResponses != null}">
         <div th:if="${#lists.isEmpty(buscarResponses)}" class="no-result">
             <p>No existen resultados.</p>
@@ -113,10 +125,22 @@
 
     <script th:inline="javascript">
         /*<![CDATA[*/
+
+        window.onload = function() {
+            setTimeout(function() {
+                const alertList = document.querySelectorAll('.alert');
+                alertList.forEach(function(alert) {
+                    new bootstrap.Alert(alert).close();
+                });
+            }, 5000); // Ajusta el tiempo según sea necesario
+        };
+
         document.getElementById('buscarBtn').addEventListener('click', function() {
-            var startDate = document.getElementById('startDate').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
             
-            var selectedAccount = document.getElementById('accounts').value;
+            const selectedAccount = document.getElementById('accounts').value;
+
             if (startDate === '' || endDate === '') {
                 alert('Por favor, selecciona las fechas de inicio y fin.');
                 event.preventDefault();
@@ -128,26 +152,7 @@
         /*]]>*/
     </script>
 
-
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        function resetMainForm() {
-            // Limpia los campos del formulario
-            document.getElementById('accounts').value = '';
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-
-            // Oculta la tabla de resultados si está visible
-            var tablaResultados = document.getElementById('tablaResultados');
-            if (tablaResultados.style.display !== 'none') {
-                tablaResultados.style.display = 'none';
-            }
-        }
-        /*]]>*/
-    </script>
-
-
 </section>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
